@@ -1,0 +1,388 @@
+Implementation Notes for the Stock Portfolio Management Project, Part 2
+
+We assume that you have accomplished the loading of the arrays from the
+data file, and now you have
+
+
+* the number of companies, which we will refer to here with c
+* the number of price quotations per row, which we will denote with n
+* a one dimensional String array loaded with the names, which we call names
+* a two dimensional double array loaded with c rows each with n genuine data
+  in it; we refer to this array with P, for convenience
+
+CALCULATING AND STORING THE OUTPUT
+
+The basic assignment has seven numerical statistics, so you can create a
+c by 7 two dimensional array to hold them.   Some are int values, some are
+doubles, but an array of double will accommodate both types and be adequate.
+Let's call that array of results R.
+
+During the calculation phase, you won't need the names of the companies, 
+just the row of price quotes.  You will need to subscript the prices array P
+to access one of its rows.  You will be calculating a row i in R from a row i
+in P, and you could write a method 
+
+private static void calculateResultRow(double[] priceRow, double[] resultRow)
+
+that loads the components of resultRow appropriately, that is, in the order
+
+low price
+high price
+net change for entire sequence
+average price for entire sequence
+standard deviation for entire sequence
+length of longest upward trend
+best growth rate of upward trend
+
+The formatting method is written so that if the longest upward trend has
+length 0, it will display "n/a" for the best growth rate.
+
+In describing how to calculate each of these, we will imagine the
+price row is a sequence of double values
+
+p0 p1 p2 ...  p(n-1)
+
+where n >= 1.  Note, if n = 1, then the sequence is just p0.
+
+You have a number of data values to calculate, some more difficult than
+others, but if you consider each in isolation to the others you can determine
+what you need to do.   Although it is more efficient to gather all statistics
+in a single scan of the row, it may be easier for you to attack each statistic
+separately, and write a method to calculate its value from the row.  Then you
+can call the method to load the appropriate component of resultRow.  
+
+The method would need both the one dimensional array of double that is a 
+single row of prices, and also the value n, so it would be able to confine the 
+calculation to just the first n components of the row.
+
+
+We consider each statistic in turn.  Most will require a scan of the all
+n values in the row, and as each value is examined, a collection of residual
+data variables that summarizes the part of the row that has already been 
+scanned will be updated to incorporate the current value.  So the whole
+loop set up, generally speaking, is
+
+
+initialize the variables representing the residual values
+
+for (int j = 0; j < n; i++){
+  look at next value, pj;
+  update residual values based on pj;
+}
+calculate desired statistical value from residual values
+
+1. the minimum value
+
+At the end, you want to have the smallest value that you encountered in the
+whole sequence;  essentially the residual value is the smallest value you 
+have encountered up to but not including pj, minSoFar, say,
+and the update is
+
+if (pj < minSoFar)
+   minSoFar = pj;
+
+That just leaves the initialization.  Generally, we initialize a cumulative
+variable to a neutral value that doesn't bias the result.  If we are 
+accumulating a sum or a count, 0 is the right initial value.  If we are
+initializing a product variable, 1 is the right initial value.  These choices
+are correct because
+
+sumSoFar = p0 + 0;  
+countSoFar = 1 + 0;
+productSoFar = p0 * 1;
+
+in the first pass through the loop will give the cumulative variable the
+appropriate value after seeing just the first value.  For the sum and product
+p0 is the right value after the first pass, and for the count, 1 is the right
+value after the first pass.  The initial value is the "identity element" for
+the cumulative operation, 0 for + and 1 for *.
+
+
+If we think of the update of minSoFar as taking the minimum of its current
+value pj
+
+minSoFar = minOf(pj, minSoFar)
+
+we want an initial value Y for minSoFar such that for ANY double value x,
+
+minOf(Y,x) ==  x
+
+which will be true provided
+
+x <= Y
+
+for any possible double value x might hold.  This reasoning suggests that 
+Double.POSITIVE_INFINITY is the appropriate choice for the initial value of 
+minSoFar, because any double value x will be <= Double.POSITIVE_INFINITY.
+
+
+2. the maximum value
+
+This is the flip side of the last one; the same reasoning applies.
+You should use Double.NEGATIVE_INFINITY for the initial value, but your
+knowledge about the range of values for the prices also allows you to
+use other initial values.
+
+3. the net change
+
+Here we need to calculate, at the end of the loop,
+
+last value - first value
+
+but this is easy to do directly from the array, since we know where the
+first and last values occur within the row.  You don't need any residual
+values during the scan of the row, in fact you don't need to scan the row
+at all for this statistic.
+
+
+4. the average
+
+the average is defined as   (sum of all values)/n
+
+so this reduces to accumulating the sum of all the array entries and 
+performing the division.  I expect you know how to sum the values in an
+the array.
+
+5. the standard deviation
+
+Although defined as the square root of the average of the sum of all 
+the squares of (pj - average), which cannot be calculated w/o first 
+obtaining the average, there is a clever way to manipulate the formula
+so that it is in effect the square root of
+
+(SumForJFrom0toN-1Of(pj * pj))/n - (average * average)
+
+(see
+https://en.wikipedia.org/wiki/Standard_deviation#Identities_and_mathematical_properties
+)
+
+You are already calculating the average and have n, so all you need is
+to calculate the sum of the squares of the entries pj, and
+you will have all you need to complete the calculation. 
+
+Just maintain a double value sumOfSquares and increase it by adding in the
+square of the next array entry as you scan the row.  After the scan,
+you can use sumOfSquares, average, and n to calculate the standard deviation
+by calculating 
+
+sumOfSquares/n - (average * average)
+
+and taking the square root of the result.
+
+6. length of longest upward trend
+
+This is a lot more challenging than the other statistics.
+
+In principle this is another find-the-maximum problem, but here it's 
+not a maximum of individual values, but of lengths of upward trends.
+Note that every value is the member of some upward trend, that if the
+entire sequence is decreasing, then there are n upward trends of length 0,
+and if the entire sequence is non-decreasing, there is one upward trend 
+of length n-1. 
+
+There are a number of ways you might accomplish this.  Here is one that
+works by marking the beginning of each upward trend, which is how you 
+might solve it manually.  The calculation is easiest if you calculate in an 
+auxiliary array of int
+
+upwardTrendStartIndices
+
+the first index of each upward trend.  Since there are at most n(and n is 
+at most 30) this can be created to be of length 30.  Index 0 is always 
+the start of the first upward trend, so
+
+upwardTrendStartIndices[0] == 0
+
+should always be true.  The first upward trend always begins at index 0.
+
+Suppose we have already seen the starts of k upward trends and they are
+loaded in upwardTrendStartIndices[m] for m running from 0 to k-1 and we are
+currently looking at price pj.  If j > 0 and pj < p(j-1), then we are 
+starting a NEW upward trend, so we would execute
+
+upwardTrendStartIndices[k++] = j
+
+to record this start of a new upward trend.  If j is 0 or (j > 0 and pj >= p(j-1))
+then we are continuing in the current upward trend, so we do not need to
+do anything except increment j.
+
+If we maintain k's value as we go, then when we have examined all the price
+values
+
+p0, p1, ..., p(n-1)
+
+we will have the number of upward trends in k, and the start indices 
+for each in 
+
+upwardTrendStartIndices[0]
+upwardTrendStartIndices[1]
+...
+upwardTrendStartIndices[k-2]
+upwardTrendStartIndices[k-1]
+
+
+k and the upwardTrendStartIndices array will provide all the information 
+we need for calculating the two statistics.
+
+For example, suppose the row of prices was
+
+10 5 30 40 50   1 2 3 4 5   6 1 100 200
+
+There are four upward trends
+
+10
+5 30 40 50
+1 2 3 4 5 6
+1 100 200
+
+Their start indices are at indexes 0, 1, 5 and 11,
+so upwardTrendStartIndices would have values { 0, 1, 5, 11, ... }
+and junk afterwards, and k would have 4 for a value.
+
+The length of an upward trend is defined as 1 less than the number
+of prices in it.  Consider upward trend m, for 0 <= m < k.  Its first
+price is at index upwardTrendStartIndices[m].  Its last price is
+either at index upwardTrendStartIndices[m+1]-1, if m < k - 1 so that it
+is not the last upward trend, or index n - 1 if it is the last upward
+trend.  We can calculate one less than the number of prices in it by
+the subtraction
+
+index of last price in the trend - index of first price in the trend
+
+For our example, this will be
+
+m value       subtraction expression       result of subtraction
+0             0 - 0                        0
+1             4 - 1                        3
+2             10 - 5                       5
+3             13 - 11                      2
+
+Note that in the last trend, the index of the last price of the trend
+is n - 1.  For our example, n is 14.  If we initialize a maxTrendLength
+variable to -1 and iterate over the upwardTrendStartIndices array, we
+should be able to calculate the lengths of each and update the maxTrendLength
+as we go.  The last trend length has to be dealt with after the loop, since
+the length is NOT given by
+
+upwardTrendStartIndices[k] - 1 - upwardTrendStartIndices[k-1]
+
+The index of the last member of the last trend is always, n - 1, one less
+than the length of the price list.
+
+7. best upward trend growth rate
+
+Again, this is a maximum value problem.  For upward trend m, 0 <= m < k-1,
+we have
+
+For upward trend m, the first price value in it is
+
+p(upwardTrendStartIndices[m])
+
+the value at the END of the trend m is the value in the p0, ..., p(n-1)
+sequence indexed by the last index of the trend, which we discussed above.
+So to calculate the average per period growth of upward trend m, you
+
+(value at end - value at start)/length
+
+and we have discussed how you obtain these values.  IMPORTANT:
+You should only perform the division if the length is > 0.  
+
+GENERALLY SPEAKING, ANY TIME YOU ARE PERFORMING A DIVISION, YOU SHOULD 
+TEST THAT THE DIVISOR IS NOT 0 TO AVOID THROWING AN EXCEPTION.
+
+For the last upward trend, k-1, the last value is just p(n-1).  Again,
+if upwardTrendStartIndices[k-1] == n - 1, then the length of the 
+trend is 0 and you should not perform the division.  Otherwise, it's
+length is positive and you can calculate the difference of the
+extremities and divide by the length to get the growth rate for the trend.
+
+You are calculating a maximum value and the approach is the same as
+for the highest price
+
+initialize maxSoFar
+for (m = 0; m < k; m++){
+   if length of trend m > 0 then
+      calculate the growth rate for trend m
+      if (growth rate for trend m > maxSoFar) then
+         maxSoFar = growth rate for trend m
+      
+}
+
+Before you execute this loop, you need to scan the prices
+to load upwardTrendStartIndices array and obtain a value for k.
+
+
+SAVING THE CALCULATIONS
+=======================
+
+The display methods expects the results to be handed to it in a one
+dimensional array of doubles of length 7.  Suppose that array is named 
+resultRow.  Then
+
+resultRow[0] is lowest price
+resultRow[1] is highest price
+resultRow[2] is net change in price for the entire period
+resultRow[3] is average price for the entire period
+resultRow[4] is standard deviation for the prices of the period
+resultRow[5] is length of longest upward trend(could be 0)
+resultRow[6] is best growth rate of any upward trend period
+
+You can create the two dimensional array of all results for all companies
+as a companyCount by 7 two dimensional double array and then pass in a row
+of that array to a calculation method that assigns the appropriate component(s)
+of the row the calculated value(s).  Of course, as  you go from one company to
+the next, the row of the table of all results has to advance as well to 
+maintain the correspondence.
+
+EXTRA CREDIT
+============
+
+Extra Credit options are intended to challenge you, so the notes won't suggest
+how to solve them.
+
+We will test your program by electronically comparing its output to correct output.
+If your extra credit implementation is not correct, but the basic assignment is
+correct, it may be more more beneficial to your grade to just submit the basic
+assignment w/o the extra credit.
+
+TESTING YOUR PROGRAM
+====================
+
+During development it is better to start with very simple test data cases so
+you can easily manually calculate what the correct results should be and also 
+so you can track your program's progress with the debugger.  
+
+We supply 12 input files
+
+tdata1.txt
+tdata2.txt
+...
+tdata12.txt
+
+The correct results are given for each test data file and the basic assignment
+are given in
+
+basic1.txt
+basic2.txt
+...
+basic12.txt
+
+
+We may, of course, test your programs on other test files.  You should write the
+code to do what the spec asks for.  Correctly handling these test cases does not
+guarantee that your program is correct.
+
+PROGRAMMING STYLE
+=================
+
+Once you have completed all of the statistics and they seem correct, you 
+should go over your program for stylistic considerations.  Make sure its format
+is good(Eclipse can do that for you), identifiers are suggestive, and that it 
+is adequately documented.
+
+THERE SHOULD BE NO TAB CHARACTERS IN YOUR FILE.  THERE WILL BE A HEFTY PENALTY
+IF THERE ARE ANY TAB CHARACTERS.
+
+You can instruct Eclipse to replace tab characters with spaces, which allows you
+to use the tab character w/o getting penalized.
+
