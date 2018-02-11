@@ -4,13 +4,10 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.io.*;
 
-/***
- * 
- * Please put your name here. John Hanewich
- * 
- * 
- ***/
-
+/**
+ * @author John Hanewich
+ *
+ */
 public class StockSolver1 {
 
     // Setup logging
@@ -75,6 +72,13 @@ public class StockSolver1 {
         return sb.toString();
     }
 
+    
+    /**
+     * @param cName company name
+     * @param prices array of prices
+     * @param periodCount the amount of prices the company holds
+     * @return A single row of formated data
+     */
     private static String rowString(String cName, double[] prices, int periodCount) {
 
         StringBuffer sb = new StringBuffer();
@@ -97,6 +101,10 @@ public class StockSolver1 {
     }
 
     // Read txt data and fill table
+    /**
+     * @param Scanner object
+     * 
+     */
     private static void loadTableFromFile(Scanner f) {
         double price;
         while (f.hasNext()) {
@@ -116,6 +124,12 @@ public class StockSolver1 {
     }
 
     // Writes table using existing helper methods
+    /**
+     * @param companyCount
+     * @param periodCount
+     * @param companyNames
+     * @param priceTable
+     */
     private static void writeTable(int companyCount, int periodCount, String[] companyNames, double[][] priceTable) {
         log.info("Writting Table ...");
         int rowCount = 0;
@@ -130,6 +144,9 @@ public class StockSolver1 {
         }
     }
 
+    /**
+     * @param Reads in file name from the command line.
+     */
     public static void main(String[] args) {
         /*
          * 
