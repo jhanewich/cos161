@@ -1,0 +1,1 @@
+To view documention, navigate to the directory containing the desired java file and run the command "JavaDoc nameOfFile.java". An html file will be generated containing documentation.
