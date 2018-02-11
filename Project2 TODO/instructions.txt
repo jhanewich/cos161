@@ -1,0 +1,84 @@
+Instructions for the Simple Linear Regression Project
+
+Depending on which of the extra credits you attempt, you should use the
+appropriate template files given here.
+
+If just the basic assignment with no extra credits implement your 
+solution on SimpleRegression.java and submit it.
+
+If you do the first but not the second, implement the basic assignment
+in SimpleRegression.java, then implement it and the first extra credit in
+SimpleRegressionXC1.java, and submit both of them.
+
+If you do just the second extra credit, implement both the basic assignment
+and the extra credit option in  SimpleRegressionXC2.java and submit it.
+
+If you do both, implement the basic and the first in SimpleRegressionXC1.java
+and the basic and the second in  SimpleRegressionXC2.java and submit both of
+them.
+
+The reason this is so complicated is that the test cases are very different
+for the first extra credit and running it on the other test cases is not
+at all revealing.
+
+Note, the only text output sent to the screen should come from the
+code we provide, so that we may test the correctness of your results with
+simple file compares.
+
+
+Note also that if you do the first extra credit, the Turtle plots
+for the average Y values for a given X will not be very informative except
+on specially constructed test files, test6.txt and test8.txt here.
+
+
+There are eleven test data files
+
+test0.txt
+test1.txt 
+...
+test10.txt
+
+included here.  All the console output for the basic assignment
+from each is given in allTestResults.txt, labeled by the test file.  
+The first five, test0.txt through test4.txt, fail the test for displaying
+the regression results.  The last six, test5.txt through test10.txt do produce
+some numerical results.  Their associated Turtle plots are given in
+im5.JPEG through im6.JPEG.
+
+Similarly all text output for the two extra credits are given in
+allXCTestResults.txt.  The only two test files that produce images for
+the first extra credit that are at all illuminating are test6.txt
+and test8.txt, and the plots are given in xcIm6.JPEG and xcIm8.JPEG.
+
+
+We may test your program on additional files.  Consult the specification
+and double check that your program implements all features that are described
+there, including the error checking that was requested.  A brief recap of the
+main requirements of the basic assignment follows. Some of this is already 
+done by the template code we included here.
+
+The program should
+
+1. accept the name of the input file on the command line; if it is not there
+it should print an error message and terminate.
+
+2. if there is a token on the command line, but a Scanner cannot be constructed
+from it, the program should print an error message and terminate.
+
+3. test data files we supply will always have an even number of positive real values,
+between 0 and 2000.  If there are fewer than 3 points, or only 1 X coordinate value,
+or only 1 Y coordinate value, the program should issue a message and terminate.
+You do not need to check if there are more than 2000 points.
+There are two boolean variables that the template program checks.  When you read
+in the points, you should set them appropriately.
+
+4. if the data passes the tests, then the program should calculate the values
+described in the assignment, call our display method to format and print them
+to the console
+
+5. again, only if the data passes the tests, use the Turtle to plot the points 
+in blue and after the points, the regression line black as described elsewhere
+
+
+Submit all your source code files in an archive file named project2.zip.
+All the source code files should belong to a package named project2.
